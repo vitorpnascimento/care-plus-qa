@@ -1,0 +1,230 @@
+{
+  "info": {
+    "name": "Care Plus - Testes Automatizados (Sprint 4 QA)",
+    "_postman_id": "care-plus-qa-sprint4",
+    "description": "Casos de teste automatizados da API Care Plus. Valida cadastro, login, autenticacao, hidratacao e check-in de bem-estar. Pré-requisito: backend rodando em http://localhost:3000 (npm run dev na pasta backend).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "emailTeste", "value": "" },
+    { "key": "senhaTeste", "value": "Senha@123" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "CT01 - Cadastro de novo usuario",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Gera um email unico a cada execucao para o teste ser repetivel",
+              "var email = 'qa_' + Date.now() + '@careplus.com';",
+              "pm.collectionVariables.set('emailTeste', email);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201 - usuario criado', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('Resposta contem id e email', function () {",
+              "    pm.expect(body).to.have.property('id');",
+              "    pm.expect(body.email).to.eql(pm.collectionVariables.get('emailTeste'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Aluno QA\",\n  \"email\": \"{{emailTeste}}\",\n  \"senha\": \"{{senhaTeste}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+      }
+    },
+    {
+      "name": "CT02 - Login com credenciais validas",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 - login efetuado', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('Retorna token JWT', function () {",
+              "    pm.expect(body.token).to.be.a('string');",
+              "    pm.expect(body.token.length).to.be.above(10);",
+              "});",
+              "// guarda o token para os proximos testes autenticados",
+              "pm.collectionVariables.set('token', body.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailTeste}}\",\n  \"senha\": \"{{senhaTeste}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+      }
+    },
+    {
+      "name": "CT03 - Login com senha incorreta",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 401 - acesso negado', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "pm.test('Mensagem de erro presente', function () {",
+              "    pm.expect(pm.response.json()).to.have.property('erro');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{emailTeste}}\",\n  \"senha\": \"senhaErrada\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+      }
+    },
+    {
+      "name": "CT04 - Acessar perfil sem token (bloqueio)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 401 - requisicao sem token bloqueada', function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
+      }
+    },
+    {
+      "name": "CT05 - Acessar perfil com token valido",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 - perfil retornado', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('Email do perfil confere com o cadastrado', function () {",
+              "    pm.expect(body.email).to.eql(pm.collectionVariables.get('emailTeste'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
+      }
+    },
+    {
+      "name": "CT06 - Registrar hidratacao (500 ml)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201 - hidratacao registrada', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('Total = 500 ml e progresso = 25%', function () {",
+              "    pm.expect(body.totalMl).to.eql(500);",
+              "    pm.expect(body.metaMl).to.eql(2000);",
+              "    pm.expect(body.progresso).to.eql(25);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantidadeMl\": 500\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/hidratacao", "host": ["{{baseUrl}}"], "path": ["hidratacao"] }
+      }
+    },
+    {
+      "name": "CT07 - Check-in de bem-estar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201 - check-in registrado', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('Humor e horas de sono salvos corretamente', function () {",
+              "    pm.expect(body.humor).to.eql('bom');",
+              "    pm.expect(body.horasSono).to.eql(8);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"humor\": \"bom\",\n  \"horasSono\": 8\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/checkin", "host": ["{{baseUrl}}"], "path": ["checkin"] }
+      }
+    }
+  ]
+}
