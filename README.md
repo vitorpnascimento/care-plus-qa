@@ -13,7 +13,7 @@ da API de bem-estar do Care Plus.
 
 ## Links de entrega
 
-- **Azure Boards (testes manuais):** COLAR_LINK_AQUI
+- **Azure Boards (testes manuais):** https://dev.azure.com/RM553693/Care%20Plus%20QA
 - **Vídeo da automação:** COLAR_LINK_AQUI
 
 > O professor precisa ser adicionado como membro da organização e do projeto no
