@@ -5,6 +5,21 @@
     "description": "Casos de teste automatizados da API Care Plus. Valida cadastro, login, autenticacao, hidratacao e check-in de bem-estar. Pré-requisito: backend rodando em http://localhost:3000 (npm run dev na pasta backend).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Parametro de desempenho aplicado a TODAS as requisicoes:",
+          "// o tempo de resposta da API deve ser menor que 500 ms.",
+          "pm.test('Tempo de resposta abaixo de 500 ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(500);",
+          "});"
+        ]
+      }
+    }
+  ],
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "emailTeste", "value": "" },
